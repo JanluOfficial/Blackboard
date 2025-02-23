@@ -58,10 +58,10 @@ class Blackboard(QMainWindow, StylesheetMixin):
         undo_action.setShortcut('Ctrl+Z')
         edit_menu.addAction(undo_action)
 
-        undo_action = QAction('Redo', self)
-        undo_action.triggered.connect(self.redo)
-        undo_action.setShortcut('Ctrl+Shift+Z')
-        edit_menu.addAction(undo_action)
+        redo_action = QAction('Redo', self)
+        redo_action.triggered.connect(self.redo)
+        redo_action.setShortcut('Ctrl+Shift+Z')
+        edit_menu.addAction(redo_action)
 
         # Main UI
         widget = QWidget()
