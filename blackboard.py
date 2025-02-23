@@ -19,7 +19,7 @@ COLORS = [
 ]
 
 class Blackboard(QMainWindow, StylesheetMixin):
-    def __init__(self, feed):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle('Blackboard')
         self.setGeometry(100, 100, 1280, 720)
