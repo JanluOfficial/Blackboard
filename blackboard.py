@@ -58,6 +58,11 @@ class Blackboard(QMainWindow, StylesheetMixin):
         undo_action.setShortcut('Ctrl+Z')
         edit_menu.addAction(undo_action)
 
+        undo_action = QAction('Redo', self)
+        undo_action.triggered.connect(self.redo)
+        undo_action.setShortcut('Ctrl+Shift+Z')
+        edit_menu.addAction(undo_action)
+
         # Main UI
         widget = QWidget()
         layout = QVBoxLayout()
@@ -116,10 +121,17 @@ class Blackboard(QMainWindow, StylesheetMixin):
     def undo(self):
         self.canvas.undo()
 
+    def redo(self):
+        self.canvas.redo()
+
     def add_palette_buttons(self, layout):
-        for c in COLORS:
-            button = JPaletteButton(c)
-            button.pressed.connect(lambda c=c: self.canvas.set_pen_color(c))
+        for i in range(0, len(COLORS)):
+            button = JPaletteButton(COLORS[i])
+            button.pressed.connect(lambda color=COLORS[i]: self.canvas.set_pen_color(color))
+            if i < 10:
+                button.setShortcut(f'{i+1}')
+            elif i == 10:
+                button.setShortcut(f'0')
             layout.addWidget(button)
         rainbow_button = JPaletteButton()
         rainbow_button.pressed.connect(lambda: self.canvas.set_pen_color())

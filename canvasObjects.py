@@ -17,6 +17,7 @@ class JCanvas(QLabel):
         self.toolWidth = 4
         self.use_pressure = True  # Enable pressure sensitivity
         self.history = []  # Stack to store undo history
+        self.redo_stack = []  # Stack to store redo history
         self.max_history = 10  # Limit history size
 
         if loadedImage is not None and not loadedImage.isNull():
@@ -33,10 +34,19 @@ class JCanvas(QLabel):
         if len(self.history) >= self.max_history:
             self.history.pop(0)  # Remove oldest state if history limit is exceeded
         self.history.append(self.pixmap.copy())
+        self.redo_stack.clear()  # Clear redo stack on new action
 
     def undo(self):
         if self.history:
+            self.redo_stack.append(self.pixmap.copy())  # Save current state for redo
             self.pixmap = self.history.pop()
+            self.setPixmap(self.pixmap)
+            self.update()
+
+    def redo(self):
+        if self.redo_stack:
+            self.history.append(self.pixmap.copy())  # Save current state for undo
+            self.pixmap = self.redo_stack.pop()
             self.setPixmap(self.pixmap)
             self.update()
 
