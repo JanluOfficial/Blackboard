@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 )
 
 class JCanvas(QLabel):
-    def __init__(self, width: int = 640, height: int = 480, color: str = '#1c1c1c', loadedImage: QPixmap = None): # Chalkboard #132015
+    def __init__(self, width: int = 640, height: int = 480, color: str = '#1c1c1c', loadedImage: QPixmap = None):
         super().__init__()
         self.width = width
         self.height = height
@@ -16,6 +16,8 @@ class JCanvas(QLabel):
         self.tool = "pen"
         self.toolWidth = 4
         self.use_pressure = True  # Enable pressure sensitivity
+        self.history = []  # Stack to store undo history
+        self.max_history = 10  # Limit history size
 
         if loadedImage is not None and not loadedImage.isNull():
             self.pixmap = loadedImage.copy()
@@ -27,8 +29,22 @@ class JCanvas(QLabel):
         self.last_x, self.last_y = None, None
         self.pen_color = QColor('#ffffff')
 
+    def save_state(self):
+        if len(self.history) >= self.max_history:
+            self.history.pop(0)  # Remove oldest state if history limit is exceeded
+        self.history.append(self.pixmap.copy())
+
+    def undo(self):
+        if self.history:
+            self.pixmap = self.history.pop()
+            self.setPixmap(self.pixmap)
+            self.update()
+
     def clear(self):
+        self.save_state()
         self.pixmap.fill(QColor(self.color))
+        self.setPixmap(self.pixmap)
+        self.update()
 
     def save(self, filename: str):
         self.pixmap.save(filename)
@@ -48,10 +64,12 @@ class JCanvas(QLabel):
         """Valid Tools: "pen", "eraser" """
         self.tool = tool
 
+    def mousePressEvent(self, e):
+        self.save_state()  # Save state before starting a new stroke
+        self.last_x, self.last_y = e.x(), e.y()
+
     def mouseMoveEvent(self, e):
         if self.last_x is None:
-            self.last_x = e.x()
-            self.last_y = e.y()
             return
 
         pressure = e.pressure() if hasattr(e, 'pressure') and self.use_pressure else 1.0
@@ -76,8 +94,7 @@ class JCanvas(QLabel):
         self.pixmap = pixmap.copy()
         self.update()
 
-        self.last_x = e.x()
-        self.last_y = e.y()
+        self.last_x, self.last_y = e.x(), e.y()
 
     def mouseReleaseEvent(self, e):
         self.last_x = None
@@ -110,7 +127,6 @@ class JPaletteButton(QPushButton):
 
             # Set up the rainbow colors
             colors = [
-                # QColor(255, 0, 0),    # Red
                 QColor(255, 127, 0),  # Orange
                 QColor(255, 255, 0),  # Yellow
                 QColor(0, 255, 0),    # Green
@@ -131,17 +147,14 @@ class JPaletteButton(QPushButton):
             super().paintEvent(event)
 
 class JCanvasContainer(QScrollArea):
-    def __init__(self, canvas, color: str = '#0c0c0c'): # Chalkboard #0a100b
+    def __init__(self, canvas, color: str = '#0c0c0c'):
         super().__init__()
-
         self.setWidgetResizable(True)
-
         self.container = QWidget()
         self.container.setStyleSheet(f'background-color: {color};')
         self.layout = QVBoxLayout()
         self.layout.addWidget(canvas, alignment=Qt.AlignCenter)
         self.container.setLayout(self.layout)
-
         self.setWidget(self.container)
 
     def setBackgroundColor(self, color: str = '#0c0c0c'):
@@ -152,5 +165,4 @@ class JCanvasContainer(QScrollArea):
             widget = self.layout.takeAt(0).widget()
             if widget is not None:
                 widget.deleteLater()
-
         self.layout.addWidget(new_canvas, alignment=Qt.AlignCenter)

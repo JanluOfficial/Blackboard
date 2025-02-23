@@ -51,6 +51,13 @@ class Blackboard(QMainWindow, StylesheetMixin):
         save_action.setShortcut('Ctrl+S')
         file_menu.addAction(save_action)
 
+        edit_menu = self.menu_bar.addMenu('Edit')
+
+        undo_action = QAction('Undo', self)
+        undo_action.triggered.connect(self.undo)
+        undo_action.setShortcut('Ctrl+Z')
+        edit_menu.addAction(undo_action)
+
         # Main UI
         widget = QWidget()
         layout = QVBoxLayout()
@@ -105,6 +112,9 @@ class Blackboard(QMainWindow, StylesheetMixin):
         layout.addWidget(tools)
 
         self.setCentralWidget(widget)
+
+    def undo(self):
+        self.canvas.undo()
 
     def add_palette_buttons(self, layout):
         for c in COLORS:
