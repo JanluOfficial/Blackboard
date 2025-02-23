@@ -71,6 +71,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
         widget.setLayout(layout)
         
         self.canvas = JCanvas()
+        self.canvas.wheelScrolled.connect(self.scroll_on_canvas)
         self.scroll_area = JCanvasContainer(self.canvas)
         layout.addWidget(self.scroll_area)
 
@@ -124,6 +125,20 @@ class Blackboard(QMainWindow, StylesheetMixin):
     def redo(self):
         self.canvas.redo()
 
+    def scroll_on_canvas(self, direction, crtl_pressed):
+        if crtl_pressed:
+          if direction == 1:
+              pass
+          elif direction == -1:
+              pass
+        else:
+            if direction == 1:
+                if self.width_slider.value() in range(1,50):
+                    self.width_slider.setValue(self.width_slider.value() + 1)
+            elif direction == -1:
+                if self.width_slider.value() in range(2,51):
+                    self.width_slider.setValue(self.width_slider.value() - 1)
+
     def add_palette_buttons(self, layout):
         for i in range(0, len(COLORS)):
             button = JPaletteButton(COLORS[i])
@@ -149,6 +164,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
                 return
             new_canvas = JCanvas(width, height)
             self.canvas = new_canvas
+            self.canvas.wheelScrolled.connect(self.scroll_on_canvas)
             self.scroll_area.set_canvas(self.canvas)
             self.canvas.clear()
             self.canvas.set_tool('pen')
@@ -163,6 +179,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
             if filename:
                 new_canvas = JCanvas(loadedImage=QPixmap(filename))
                 self.canvas = new_canvas
+                self.canvas.wheelScrolled.connect(self.scroll_on_canvas)
                 self.scroll_area.set_canvas(self.canvas)
                 self.canvas.set_tool('pen')
                 self.canvas.set_tool_width(self.width_slider.value())
@@ -182,6 +199,6 @@ class Blackboard(QMainWindow, StylesheetMixin):
                 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    feedstream = Blackboard(None)
-    feedstream.show()
+    blackboard = Blackboard()
+    blackboard.show()
     sys.exit(app.exec_())

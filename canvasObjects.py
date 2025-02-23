@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QSize, QEvent
+from PyQt5.QtCore import Qt, QSize, QEvent, pyqtSignal
 from PyQt5.QtGui import (
     QFont, QPixmap, QColor, QPainter, QBrush, QConicalGradient
 )
@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
 )
 
 class JCanvas(QLabel):
+    wheelScrolled = pyqtSignal(int, bool)
     def __init__(self, width: int = 640, height: int = 480, color: str = '#1c1c1c', loadedImage: QPixmap = None):
         super().__init__()
         self.width = width
@@ -58,6 +59,12 @@ class JCanvas(QLabel):
 
     def save(self, filename: str):
         self.pixmap.save(filename)
+
+    def wheelEvent(self, event):
+        scroll_direction = 1 if event.angleDelta().y() > 0 else -1
+        ctrl_pressed = event.modifiers() & Qt.ControlModifier  # Check if Ctrl is pressed
+        self.wheelScrolled.emit(scroll_direction, ctrl_pressed)  # Emit the signal with scroll direction and Ctrl state
+        event.accept()
 
     def set_pen_color(self, color: str = None):
         if not color:
