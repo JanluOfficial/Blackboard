@@ -239,7 +239,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
 
     def save_action(self):
         if self.current_file == None: return
-        self.canvas.save(self.current_file)
+        self.canvas.save(self.current_file, "blackboard")
 
     def save_as(self):
         options = QFileDialog.Options()

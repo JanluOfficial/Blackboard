@@ -60,9 +60,12 @@ class JCanvas(QLabel):
         self.setPixmap(self.pixmap)
         self.update()
 
-    def save(self, filename: str):
+    def save(self, filename: str, app_name: str = None):
+        """If app_name is defined as a string, a metadata tag called "is_*your_app_name*_image" will be added with the value "yes" to the output file."""
         writer = QImageWriter(filename)
         writer.setText("canvas_color", self.color.name())
+        if app_name is not None:
+            writer.setText(f"is_{app_name}_image", "yes")
         if not writer.write(self.pixmap.toImage()):
             QMessageBox.critical(self, "Failed to save image", "An unexpected error occoured:\n" + writer.errorString())
 
