@@ -88,22 +88,32 @@ class Blackboard(QMainWindow, StylesheetMixin):
         tools_layout.addLayout(tool_selector)
 
         pen_tool = QPushButton('Pen')
+        pen_tool.setShortcut('P')
+        pen_tool.setToolTip('<b>Pen (P):</b> Freehand drawing tool.')
         pen_tool.clicked.connect(lambda: self.canvas.set_tool('pen'))
         tool_selector.addWidget(pen_tool)
 
         eraser_tool = QPushButton('Eraser')
+        eraser_tool.setShortcut('Shift+P')
+        eraser_tool.setToolTip('<b>Eraser (Shift+P):</b> Erase parts of the drawing.')
         eraser_tool.clicked.connect(lambda: self.canvas.set_tool('eraser'))
         tool_selector.addWidget(eraser_tool)
 
         rectangle_tool = QPushButton('Rectangle')
+        rectangle_tool.setShortcut('R')
+        rectangle_tool.setToolTip('<b>Rectangle (R):</b> Draw rectangular shapes.')
         rectangle_tool.clicked.connect(lambda: self.canvas.set_tool('rectangle'))
         tool_selector.addWidget(rectangle_tool)
 
         ellipse_tool = QPushButton('Ellipse')
+        ellipse_tool.setShortcut('E')
+        ellipse_tool.setToolTip('<b>Ellipse (E):</b> Draw elliptical shapes.')
         ellipse_tool.clicked.connect(lambda: self.canvas.set_tool('ellipse'))
         tool_selector.addWidget(ellipse_tool)
 
         line_tool = QPushButton('Line')
+        line_tool.setShortcut('L')
+        line_tool.setToolTip('<b>Line (L):</b> Draw straight lines.')
         line_tool.clicked.connect(lambda: self.canvas.set_tool('line'))
         tool_selector.addWidget(line_tool)
 
