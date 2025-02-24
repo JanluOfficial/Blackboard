@@ -23,6 +23,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
         super().__init__()
         self.setWindowTitle('Blackboard')
         self.setGeometry(100, 100, 1280, 720)
+        self.current_file = None
         self.init_ui()
 
     def init_ui(self):
@@ -47,8 +48,13 @@ class Blackboard(QMainWindow, StylesheetMixin):
         file_menu.addAction(open_action)
 
         save_action = QAction('Save', self)
-        save_action.triggered.connect(self.save_action)
+        save_action.triggered.connect(lambda: self.save_as() if self.current_file == None else self.save_action())
         save_action.setShortcut('Ctrl+S')
+        file_menu.addAction(save_action)
+
+        save_action = QAction('Save As', self)
+        save_action.triggered.connect(lambda: self.save_as())
+        save_action.setShortcut('Ctrl+Shift+S')
         file_menu.addAction(save_action)
 
         edit_menu = self.menu_bar.addMenu('Edit')
@@ -211,11 +217,16 @@ class Blackboard(QMainWindow, StylesheetMixin):
             QMessageBox.warning(self, "Error", f"Failed to open file: {e}")
 
     def save_action(self):
+        if self.current_file == None: return
+        self.canvas.save(self.current_file)
+
+    def save_as(self):
         options = QFileDialog.Options()
         try:
             filename, _ = QFileDialog.getSaveFileName(self, "Save File As", "", "Image Files (*.png);;All Files (*)", options=options)
             if filename:
-                self.canvas.save(filename)
+                self.current_file = filename
+                self.save_action()
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to open file: {e}")
                 
