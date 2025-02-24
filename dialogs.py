@@ -8,7 +8,7 @@ from StylesheetMixin import StylesheetMixin
 class NewCanvasDialog(QDialog, StylesheetMixin):
     def __init__(self, width: int = 640, height: int = 480):
         super().__init__()
-        self.apply_stylesheet()
+        self.apply_stylesheet('bb')
         self.setWindowTitle('New Canvas')
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
