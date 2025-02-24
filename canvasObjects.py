@@ -1,10 +1,11 @@
 from PyQt5.QtCore import Qt, QSize, QEvent, pyqtSignal
 from PyQt5.QtGui import (
-    QFont, QPixmap, QColor, QPainter, QBrush, QConicalGradient
+    QFont, QPixmap, QColor, QPainter, QBrush, QConicalGradient,
+    QImageWriter
 )
 from PyQt5.QtWidgets import (
     QLabel, QPushButton, QScrollArea, QWidget, QVBoxLayout, QHBoxLayout,
-    QColorDialog
+    QColorDialog, QMessageBox
 )
 
 class JCanvas(QLabel):
@@ -60,7 +61,10 @@ class JCanvas(QLabel):
         self.update()
 
     def save(self, filename: str):
-        self.pixmap.save(filename)
+        writer = QImageWriter(filename)
+        writer.setText("canvas_color", self.color.name())
+        if not writer.write(self.pixmap.toImage()):
+            QMessageBox.critical(self, "Failed to save image", "An unexpected error occoured:\n" + writer.errorString())
 
     def wheelEvent(self, event):
         scroll_direction = 1 if event.angleDelta().y() > 0 else -1

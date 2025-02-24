@@ -1,7 +1,7 @@
 import sys
 import time
 from PyQt5.QtCore import Qt #, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont, QPixmap, QImageReader
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QAction, QWidget,
     QDialog, QMessageBox, QSizePolicy, QPushButton, QScrollArea, QSlider,
@@ -13,9 +13,13 @@ from canvasObjects import (
 )
 from StylesheetMixin import StylesheetMixin
 
-COLORS = [
+DARKCOLORS = [
     '#ffffff', '#fff44f', '#ffb6c1', '#6ec6ff',
     '#77dd77', '#c3a6ff', '#ffb347', '#ff6961'
+]
+LIGHTCOLORS = [
+    '#000000', '#0000ff', '#800080', '#008000',
+    '#ff0000', '#ffa500', '#a52a2a', '#ffd700'
 ]
 
 class Blackboard(QMainWindow, StylesheetMixin):
@@ -85,9 +89,9 @@ class Blackboard(QMainWindow, StylesheetMixin):
         tools = QScrollArea()
         tools_layout = QHBoxLayout()
         
-        palette = QHBoxLayout()
-        palette.setAlignment(Qt.AlignLeft)
-        tools_layout.addLayout(palette)
+        self.palette = QHBoxLayout()
+        self.palette.setAlignment(Qt.AlignLeft)
+        tools_layout.addLayout(self.palette)
 
         tool_selector = QHBoxLayout()
         tool_selector.setAlignment(Qt.AlignLeft)
@@ -131,7 +135,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
         self.width_slider.valueChanged.connect(lambda: self.canvas.set_tool_width(self.width_slider.value()))
         tools_layout.addWidget(self.width_slider)
 
-        self.add_palette_buttons(palette)
+        self.add_palette_buttons(self.palette, DARKCOLORS)
 
         palette_widget = QWidget()
         palette_widget.setLayout(tools_layout)
@@ -167,15 +171,24 @@ class Blackboard(QMainWindow, StylesheetMixin):
                 if self.width_slider.value() in range(2,51):
                     self.width_slider.setValue(self.width_slider.value() - 1)
 
-    def add_palette_buttons(self, layout):
-        for i in range(0, len(COLORS)):
-            button = JPaletteButton(COLORS[i])
-            button.pressed.connect(lambda color=COLORS[i]: self.canvas.set_pen_color(color))
+    def add_palette_buttons(self, layout, colors):
+        # Clear existing palette buttons if they exist
+        for i in reversed(range(layout.count())): 
+            item = layout.itemAt(i)
+            if item.widget():
+                item.widget().setParent(None)
+                # item.widget().deleteLater()
+
+        # Add new palette buttons
+        for i in range(0, len(colors)):
+            button = JPaletteButton(colors[i])
+            button.pressed.connect(lambda color=colors[i]: self.canvas.set_pen_color(color))
             if i < 10:
                 button.setShortcut(f'{i+1}')
             elif i == 10:
                 button.setShortcut(f'0')
             layout.addWidget(button)
+
         rainbow_button = JPaletteButton()
         rainbow_button.pressed.connect(lambda: self.canvas.set_pen_color())
         layout.addWidget(rainbow_button)
@@ -190,7 +203,9 @@ class Blackboard(QMainWindow, StylesheetMixin):
             except ValueError:
                 QMessageBox.critical(self, "Value Error", "Both the height and width must be entered to create a new canvas.")
                 return
-            new_canvas = JCanvas(width, height)
+            color = '#ffffff' if dialog.selected_color[0] == 'Light' else dialog.selected_color[1] if dialog.selected_color[0] == 'Custom Color' else '#1c1c1c'
+            new_canvas = JCanvas(width, height, color)
+            self.add_palette_buttons(self.palette, DARKCOLORS if new_canvas.color.getHsl()[2] < 128 else LIGHTCOLORS)
             self.canvas = new_canvas
             self.canvas.wheelScrolled.connect(self.scroll_on_canvas)
             self.scroll_area.set_canvas(self.canvas)
@@ -205,16 +220,22 @@ class Blackboard(QMainWindow, StylesheetMixin):
         try:
             filename, _ = QFileDialog.getOpenFileName(self, "Open File", "", "Image Files (*.png);;All Files (*)", options=options)
             if filename:
-                new_canvas = JCanvas(loadedImage=QPixmap(filename))
+                reader = QImageReader(filename)
+                metadata_color = reader.text("canvas_color")  # Extract metadata
+
+                # Default to dark if no color metadata is found
+                canvas_color = metadata_color if metadata_color else "#1c1c1c"
+
+                new_canvas = JCanvas(loadedImage=QPixmap(filename), color=canvas_color)
+                self.add_palette_buttons(self.palette, DARKCOLORS if new_canvas.color.getHsl()[2] < 128 else LIGHTCOLORS)
                 self.canvas = new_canvas
                 self.canvas.wheelScrolled.connect(self.scroll_on_canvas)
                 self.scroll_area.set_canvas(self.canvas)
                 self.canvas.set_tool('pen')
                 self.canvas.set_tool_width(self.width_slider.value())
                 self.canvas.set_pen_color(pen_color)
-
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to open file: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to load image: {str(e)}")
 
     def save_action(self):
         if self.current_file == None: return
