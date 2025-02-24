@@ -1,0 +1,1 @@
+nuitka --onefile --standalone --enable-plugin=pyqt5 --remove-output --include-data-files=style.qss=style.qss --output-dir=dist blackboard.py
