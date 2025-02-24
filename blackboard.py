@@ -26,7 +26,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
         self.init_ui()
 
     def init_ui(self):
-        self.apply_stylesheet()
+        self.apply_stylesheet(prefix='bb')
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         self.main_layout = QVBoxLayout()
