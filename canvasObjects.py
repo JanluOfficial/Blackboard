@@ -23,6 +23,8 @@ class JCanvas(QLabel):
 
         if loadedImage is not None and not loadedImage.isNull():
             self.pixmap = loadedImage.copy()
+            self.width = self.pixmap.width()
+            self.height = self.pixmap.height()
         else:
             self.pixmap = QPixmap(width, height)
             self.pixmap.fill(self.color)
