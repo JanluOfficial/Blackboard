@@ -256,3 +256,8 @@ QTableView::item:selected {
     background-color: #0c0c0c;
     color: white;
 }
+
+/* Canvas Background */
+JCanvasContainer QWidget {
+  background-color: #0c0c0c;
+}

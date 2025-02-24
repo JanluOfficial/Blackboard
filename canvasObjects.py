@@ -226,7 +226,7 @@ class JCanvasContainer(QScrollArea):
         super().__init__()
         self.setWidgetResizable(True)
         self.container = QWidget()
-        self.container.setStyleSheet(f'background-color: {color};')
+        self.setObjectName('JCanvasContainer')
         self.layout = QVBoxLayout()
         self.layout.addWidget(canvas, alignment=Qt.AlignCenter)
         self.container.setLayout(self.layout)
