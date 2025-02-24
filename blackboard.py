@@ -95,6 +95,18 @@ class Blackboard(QMainWindow, StylesheetMixin):
         eraser_tool.clicked.connect(lambda: self.canvas.set_tool('eraser'))
         tool_selector.addWidget(eraser_tool)
 
+        rectangle_tool = QPushButton('Rectangle')
+        rectangle_tool.clicked.connect(lambda: self.canvas.set_tool('rectangle'))
+        tool_selector.addWidget(rectangle_tool)
+
+        ellipse_tool = QPushButton('Ellipse')
+        ellipse_tool.clicked.connect(lambda: self.canvas.set_tool('ellipse'))
+        tool_selector.addWidget(ellipse_tool)
+
+        line_tool = QPushButton('Line')
+        line_tool.clicked.connect(lambda: self.canvas.set_tool('line'))
+        tool_selector.addWidget(line_tool)
+
         self.width_slider = QSlider()
         self.width_slider.setMinimum(1)
         self.width_slider.setMaximum(50)

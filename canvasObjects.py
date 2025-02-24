@@ -33,20 +33,20 @@ class JCanvas(QLabel):
 
     def save_state(self):
         if len(self.history) >= self.max_history:
-            self.history.pop(0)  # Remove oldest state if history limit is exceeded
+            self.history.pop(0)
         self.history.append(self.pixmap.copy())
-        self.redo_stack.clear()  # Clear redo stack on new action
+        self.redo_stack.clear()
 
     def undo(self):
         if self.history:
-            self.redo_stack.append(self.pixmap.copy())  # Save current state for redo
+            self.redo_stack.append(self.pixmap.copy())
             self.pixmap = self.history.pop()
             self.setPixmap(self.pixmap)
             self.update()
 
     def redo(self):
         if self.redo_stack:
-            self.history.append(self.pixmap.copy())  # Save current state for undo
+            self.history.append(self.pixmap.copy())
             self.pixmap = self.redo_stack.pop()
             self.setPixmap(self.pixmap)
             self.update()
@@ -62,8 +62,8 @@ class JCanvas(QLabel):
 
     def wheelEvent(self, event):
         scroll_direction = 1 if event.angleDelta().y() > 0 else -1
-        ctrl_pressed = event.modifiers() & Qt.ControlModifier  # Check if Ctrl is pressed
-        self.wheelScrolled.emit(scroll_direction, ctrl_pressed)  # Emit the signal with scroll direction and Ctrl state
+        ctrl_pressed = event.modifiers() & Qt.ControlModifier
+        self.wheelScrolled.emit(scroll_direction, ctrl_pressed)
         event.accept()
 
     def set_pen_color(self, color: str = None):
@@ -82,40 +82,96 @@ class JCanvas(QLabel):
         self.tool = tool
 
     def mousePressEvent(self, e):
-        self.save_state()  # Save state before starting a new stroke
+        self.save_state()
         self.last_x, self.last_y = e.x(), e.y()
+        if self.tool in ["rectangle", "ellipse", "line"]:
+            self.shape_start = (self.last_x, self.last_y)
 
     def mouseMoveEvent(self, e):
         if self.last_x is None:
             return
 
-        pressure = e.pressure() if hasattr(e, 'pressure') and self.use_pressure else 1.0
-        dynamic_width = max(1, round(self.toolWidth * pressure))
+        if self.tool in ["pen", "eraser"]:
+            pressure = e.pressure() if hasattr(e, 'pressure') and self.use_pressure else 1.0
+            dynamic_width = max(1, round(self.toolWidth * pressure))
 
-        pixmap = self.pixmap.copy()
-        painter = QPainter(pixmap)
-        p = painter.pen()
-        if self.tool == 'pen':
+            pixmap = self.pixmap.copy()
+            painter = QPainter(pixmap)
+            p = painter.pen()
+
+            if self.tool == 'pen':
+                p.setColor(self.pen_color)
+                p.setWidth(dynamic_width)
+                p.setCapStyle(Qt.RoundCap)
+            elif self.tool == 'eraser':
+                p.setColor(self.color)
+                p.setWidth(round(dynamic_width * 1.5))
+                p.setCapStyle(Qt.RoundCap)
+
+            painter.setPen(p)
+            painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
+            painter.end()
+
+            self.setPixmap(pixmap)
+            self.pixmap = pixmap.copy()
+            self.update()
+
+            self.last_x, self.last_y = e.x(), e.y()
+        elif self.tool in ["rectangle", "ellipse", "line"] and self.shape_start:
+            pixmap = self.pixmap.copy()
+            painter = QPainter(pixmap)
+            p = painter.pen()
             p.setColor(self.pen_color)
-            p.setWidth(dynamic_width)
-            p.setCapStyle(Qt.RoundCap)
-        elif self.tool == 'eraser':
-            p.setColor(self.color)
-            p.setWidth(round(dynamic_width * 1.5))
-            p.setCapStyle(Qt.RoundCap)
-        painter.setPen(p)
-        painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
-        painter.end()
+            p.setWidth(self.toolWidth)
+            p.setJoinStyle(Qt.MiterJoin)
+            painter.setPen(p)
+    
+            current_x, current_y = e.x(), e.y()
+            start_x, start_y = self.shape_start
+            if self.tool == "rectangle":
+                painter.drawRect(min(start_x, current_x), min(start_y, current_y),
+                                 abs(current_x - start_x), abs(current_y - start_y))
+            elif self.tool == "ellipse":
+                painter.drawEllipse(min(start_x, current_x), min(start_y, current_y),
+                                    abs(current_x - start_x), abs(current_y - start_y))
+            elif self.tool == "line":
+                painter.drawLine(start_x, start_y, current_x, current_y)
 
-        self.setPixmap(pixmap)
-        self.pixmap = pixmap.copy()
-        self.update()
+            painter.end()
+            self.setPixmap(pixmap)
+            self.update()
 
-        self.last_x, self.last_y = e.x(), e.y()
 
     def mouseReleaseEvent(self, e):
+        if self.tool in ["rectangle", "ellipse", "line"] and self.shape_start:
+            # Finalize the shape drawing
+            pixmap = self.pixmap.copy()
+            painter = QPainter(pixmap)
+            p = painter.pen()
+            p.setColor(self.pen_color)
+            p.setWidth(self.toolWidth)
+            p.setJoinStyle(Qt.MiterJoin)
+            painter.setPen(p)
+
+            start_x, start_y = self.shape_start
+            end_x, end_y = e.x(), e.y()
+            if self.tool == "rectangle":
+                painter.drawRect(min(start_x, end_x), min(start_y, end_y),
+                                 abs(end_x - start_x), abs(end_y - start_y))
+            elif self.tool == "ellipse":
+                painter.drawEllipse(min(start_x, end_x), min(start_y, end_y),
+                                    abs(end_x - start_x), abs(end_y - start_y))
+            elif self.tool == "line":
+                painter.drawLine(start_x, start_y, end_x, end_y)
+
+            painter.end()
+            self.setPixmap(pixmap)
+            self.pixmap = pixmap.copy()
+            self.update()
+
         self.last_x = None
         self.last_y = None
+        self.shape_start = None
 
     def tabletEvent(self, event):
         if event.type() == QEvent.TabletMove:
