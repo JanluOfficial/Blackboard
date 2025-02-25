@@ -96,13 +96,14 @@ class JCanvas(QLabel):
         if self.tool in ["rectangle", "ellipse", "line"]:
             self.shape_start = (self.last_x, self.last_y)
 
-    def mouseMoveEvent(self, e):
+    def mouseMoveEvent(self, e, dynamic_width: int = None):
         if self.last_x is None:
             return
 
+        if dynamic_width == None:
+            dynamic_width = self.toolWidth
+
         if self.tool in ["pen", "eraser"]:
-            pressure = e.pressure() if hasattr(e, 'pressure') and self.use_pressure else 1.0
-            dynamic_width = max(1, round(self.toolWidth * pressure))
 
             pixmap = self.pixmap.copy()
             painter = QPainter(pixmap)
@@ -150,7 +151,6 @@ class JCanvas(QLabel):
             self.setPixmap(pixmap)
             self.update()
 
-
     def mouseReleaseEvent(self, e):
         if self.tool in ["rectangle", "ellipse", "line"] and self.shape_start:
             # Finalize the shape drawing
@@ -183,9 +183,15 @@ class JCanvas(QLabel):
         self.shape_start = None
 
     def tabletEvent(self, event):
-        if event.type() == QEvent.TabletMove:
+        self.pressure = event.pressure() if hasattr(event, 'pressure') and self.use_pressure else 0.01
+        dynamic_width = max(1, round(self.toolWidth * self.pressure))
+        if event.type() == QEvent.TabletPress:
             self.use_pressure = True
-            self.mouseMoveEvent(event)
+            self.mousePressEvent(event)
+        elif event.type() == QEvent.TabletMove:
+            self.use_pressure = True
+            self.mouseMoveEvent(event, dynamic_width)
+        
         event.accept()
 
 class JPaletteButton(QPushButton):
