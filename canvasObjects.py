@@ -21,6 +21,7 @@ class JCanvas(QLabel):
         self.history = []  # Stack to store undo history
         self.redo_stack = []  # Stack to store redo history
         self.max_history = 10  # Limit history size
+        self.saved_for_stroke = False
 
         if loadedImage is not None and not loadedImage.isNull():
             self.pixmap = loadedImage.copy()
@@ -91,14 +92,17 @@ class JCanvas(QLabel):
         self.tool = tool
 
     def mousePressEvent(self, e):
-        self.save_state()
         self.last_x, self.last_y = e.x(), e.y()
         if self.tool in ["rectangle", "ellipse", "line"]:
             self.shape_start = (self.last_x, self.last_y)
 
     def mouseMoveEvent(self, e, dynamic_width: int = None):
-        if self.last_x is None:
+        if self.last_x is None or (self.last_x, self.last_y) == (e.x(), e.y()):
             return
+        
+        if not self.saved_for_stroke:
+            self.save_state()
+            self.saved_for_stroke = True
 
         if dynamic_width == None:
             dynamic_width = self.toolWidth
@@ -181,6 +185,7 @@ class JCanvas(QLabel):
         self.last_x = None
         self.last_y = None
         self.shape_start = None
+        self.saved_for_stroke = False
 
     def tabletEvent(self, event):
         self.pressure = event.pressure() if hasattr(event, 'pressure') and self.use_pressure else 0.01

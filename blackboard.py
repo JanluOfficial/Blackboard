@@ -194,6 +194,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
         layout.addWidget(rainbow_button)
 
     def new_action(self):
+        self.current_file = None
         pen_color = self.canvas.pen_color
         dialog = dialogs.NewCanvasDialog(self.canvas.width, self.canvas.height)
         if dialog.exec_() == QDialog.Accepted:
@@ -234,6 +235,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
                 self.canvas.set_tool('pen')
                 self.canvas.set_tool_width(self.width_slider.value())
                 self.canvas.set_pen_color(pen_color)
+                self.current_file = filename
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to load image: {str(e)}")
 
