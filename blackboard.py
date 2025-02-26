@@ -27,6 +27,7 @@ class Blackboard(QMainWindow, StylesheetMixin):
         super().__init__()
         self.setWindowTitle('Blackboard')
         self.setGeometry(100, 100, 1280, 720)
+        self.setMinimumSize(480, 360)
         self.current_file = None
         self.init_ui()
 
